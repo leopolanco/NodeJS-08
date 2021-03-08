@@ -38,7 +38,7 @@ router.post(
 //@route  GET api/pages
 //@desc  get all pages
 //@access private
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const pages = await Page.find().sort({ date: -1 }) // sort by most recent
     res.json(pages)
@@ -51,7 +51,7 @@ router.get('/', auth, async (req, res) => {
 //@route  GET api/pages/:id
 //@desc  get page by name
 //@access private
-router.get('/:pageName', auth, async (req, res) => {
+router.get('/:pageName', async (req, res) => {
   try {
     const page = await Page.findOne({pageName: `${req.params.pageName}`})
     if (!page) {

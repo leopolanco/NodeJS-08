@@ -1,8 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const { check, validationResult } = require('express-validator')
-const auth = require('../../middleware/auth') //to protect
+const axios = require('axios')
+const auth = require('../../middleware/auth')
 const Page = require('../../models/Page')
+require('dotenv').config()
 
 //@route  POST api/pages
 //@desc   create a page
@@ -16,20 +18,40 @@ router.post(
     if (!error.isEmpty) {
       return res.status(400).json({ errors: errors.array() })
     }
-    const repeated = await Page.findOne({pageName: `${req.body.pageName}`})
-    if(repeated) {
+    const repeated = await Page.findOne({ pageName: `${req.body.pageName}` })
+    if (repeated) {
       return res.status(400).send('Repeated page name')
     }
+
     try {
+      // get a new dynamic link from google
+      const dynamicLinkData = JSON.stringify({
+        dynamicLinkInfo: {
+          link: 'https://rob-test-a493c.web.app/appNotDownloaded',
+          domainUriPrefix: 'https://robtest.page.link'
+        },
+        suffix: {
+          option: 'SHORT'
+        }
+      })
+      const { data } = await axios.post(
+        `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${process.env.FIREBASE_API_KEY}`,
+        dynamicLinkData,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
       const newPage = new Page({
         user: req.user.id,
-        pageName: req.body.pageName
+        pageName: req.body.pageName,
+        shareLink: data.shortLink
       })
-
       const page = await newPage.save()
       res.json(page)
     } catch (err) {
-      console.error(err.message)
+      console.error(err)
       res.status(500).send('Server Error')
     }
   }
@@ -37,7 +59,7 @@ router.post(
 
 //@route  GET api/pages
 //@desc  get all pages
-//@access private
+//@access public
 router.get('/', async (req, res) => {
   try {
     const pages = await Page.find().sort({ date: -1 }) // sort by most recent
@@ -50,10 +72,10 @@ router.get('/', async (req, res) => {
 
 //@route  GET api/pages/:id
 //@desc  get page by name
-//@access private
+//@access public
 router.get('/:pageName', async (req, res) => {
   try {
-    const page = await Page.findOne({pageName: `${req.params.pageName}`})
+    const page = await Page.findOne({ pageName: `${req.params.pageName}` })
     if (!page) {
       return res.status(404).json({ msg: 'Page not found' }) // for when there is not a page
     }
@@ -66,7 +88,6 @@ router.get('/:pageName', async (req, res) => {
     res.status(500).send('Server Error')
   }
 })
-
 
 //@route  Delete api/pages/:id
 //@desc  delete page by id

@@ -27,7 +27,7 @@ router.post(
       // get a new dynamic link from google
       const dynamicLinkData = JSON.stringify({
         dynamicLinkInfo: {
-          link: 'https://rob-test-a493c.web.app/appNotDownloaded',
+          link: `https://rob-test-a493c.web.app/appNotDownloaded/${req.body.pageName}`,
           domainUriPrefix: 'https://robtest.page.link'
         },
         suffix: {

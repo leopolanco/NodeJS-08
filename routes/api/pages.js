@@ -31,10 +31,13 @@ router.post(
           domainUriPrefix: 'https://robtest.page.link'
         },
         suffix: {
-          option: 'SHORT'
+          option: 'UNGUESSABLE'
         }
       })
-      const { data } = await axios.post(
+
+      const {
+        data: { shortLink }
+      } = await axios.post(
         `https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=${process.env.FIREBASE_API_KEY}`,
         dynamicLinkData,
         {
@@ -46,12 +49,12 @@ router.post(
       const newPage = new Page({
         user: req.user.id,
         pageName: req.body.pageName,
-        shareLink: data.shortLink
+        shareLink: shortLink
       })
       const page = await newPage.save()
       res.json(page)
     } catch (err) {
-      console.error(err)
+      console.error(err.message)
       res.status(500).send('Server Error')
     }
   }
